@@ -1,0 +1,25 @@
+# Node.js
+node_modules/
+dist/
+npm-debug.log*
+
+# Whisper Binaries & Models
+**/Release/
+**/*.bin
+**/whisper-cli.exe
+
+# App Directories
+**/uploads/
+**/downloads/
+
+# OS/System
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
