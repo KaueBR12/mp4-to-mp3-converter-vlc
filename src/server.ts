@@ -107,7 +107,7 @@ app.post('/api/convert', upload.single('file'), async (req: Request, res: Respon
       }
 
       console.log('VLC finalizou. Aguardando sincronização de arquivo...');
-      
+
       // Pequeno delay para garantir que o arquivo foi gravado no disco
       setTimeout(() => {
         if (!fs.existsSync(outputPath)) {
@@ -245,7 +245,7 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
     console.log(`Starting real transcription for: ${filename}`);
 
     const outputBase = path.join(downloadsDir, `${path.parse(String(filename)).name}_transcribed`);
-    
+
     const whisperArgs = [
       '-m', WHISPER_MODEL_PATH,
       '-f', mp3Path,
@@ -266,10 +266,10 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
       if (progressMatch) {
         const percent = parseInt(progressMatch[1]);
         const mappedPercent = 10 + Math.floor(percent * 0.85);
-        sendEvent({ 
-          status: 'progress', 
-          percent: mappedPercent, 
-          message: `Processando IA: ${percent}%` 
+        sendEvent({
+          status: 'progress',
+          percent: mappedPercent,
+          message: `Processando IA: ${percent}%`
         });
       }
       console.log(`Whisper output: ${output.trim()}`);
@@ -289,7 +289,7 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
 
       console.log('Transcrição finalizada com sucesso.');
       sendEvent({ status: 'completed', transcription: transcriptionText });
-      
+
       setTimeout(() => res.end(), 100);
     });
 
