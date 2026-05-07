@@ -54,3 +54,27 @@ Download the correct `whisper-cli` version for your system:
 
 ## 📁 Project Structure
 
+```
+mp4-to-mp3-converter/
+├── Release/               # Binários do Whisper (whisper-cli.exe e DLLs)
+├── src/
+│   └── server.ts          # Servidor Express com lógica VLC e Whisper
+├── public/                # Frontend da aplicação
+├── uploads/               # Arquivos temporários de vídeo
+├── downloads/             # Arquivos MP3 e transcrições geradas
+├── ggml-medium.bin        # Modelo da IA (Deve ser baixado manualmente)
+└── package.json
+```
+
+## ⚙️ Environment Variables
+
+If your VLC is installed in a different path, you can set the `VLC_PATH` environment variable in your system or edit it directly in `server.ts`.
+
+## 🔒 Security and Cleanup
+- The application only validates `.mp4` files.
+- Files are automatically removed from the server 1 second after download to save disk space.
+
+---
+Developed for maximum privacy and local performance. 🚀
+
+
