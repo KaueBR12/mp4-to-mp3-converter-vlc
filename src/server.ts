@@ -89,35 +89,47 @@ app.post('/api/convert', upload.single('file'), async (req: Request, res: Respon
 
     // Comando VLC para converter
     const vlcArgs = [
-      '-I',
-      'dummy',
+      '-I', 'dummy',
+      '--no-repeat',
+      '--no-loop',
       inputPath,
-      `--sout=#transcode{acodec=mp3,ab=192}:standard{access=file,mux=raw,dst='${outputPath}'}`,
-      'vlc://quit',
+      `--sout=#transcode{acodec=mp3,ab=192}:standard{access=file,mux=raw,dst="${outputPath}"}`,
+      '--play-and-exit'
     ];
 
-    execFile(VLC_PATH, vlcArgs, { maxBuffer: 500 * 1024 * 1024 }, (error) => {
-      if (error) {
-        console.error('VLC error:', error);
+    console.log(`Iniciando VLC: ${VLC_PATH} ${vlcArgs.join(' ')}`);
+    const vlcProcess = spawn(VLC_PATH, vlcArgs);
+
+    vlcProcess.on('close', (code) => {
+      if (code !== 0 && code !== 1) { // VLC às vezes retorna 1 mesmo em sucesso
+        console.error(`VLC saiu com erro: ${code}`);
+        return res.status(500).json({ error: 'Conversion failed' });
+      }
+
+      console.log('VLC finalizou. Aguardando sincronização de arquivo...');
+      
+      // Pequeno delay para garantir que o arquivo foi gravado no disco
+      setTimeout(() => {
+        if (!fs.existsSync(outputPath)) {
+          console.error(`Erro: O arquivo MP3 não foi criado em: ${outputPath}`);
+          return res.status(500).json({ error: 'O VLC não conseguiu gerar o arquivo MP3. Verifique se o vídeo é válido.' });
+        }
+
+        const stats = fs.statSync(outputPath);
+        console.log(`MP3 gerado com sucesso: ${stats.size} bytes`);
+
+        // Deletar arquivo original
         fs.unlink(inputPath, (err) => {
           if (err) console.error('Error deleting input file:', err);
         });
-        return res.status(500).json({ error: 'Conversion failed', details: error.message });
-      }
 
-      console.log('Conversion finished');
-
-      // Deletar arquivo original
-      fs.unlink(inputPath, (err) => {
-        if (err) console.error('Error deleting input file:', err);
-      });
-
-      res.json({
-        success: true,
-        message: 'File converted successfully',
-        filename: `${filename}.mp3`,
-        url: `/download/${filename}.mp3`,
-      });
+        res.json({
+          success: true,
+          message: 'File converted successfully',
+          filename: `${filename}.mp3`,
+          url: `/download/${filename}.mp3`,
+        });
+      }, 800);
     });
   } catch (error) {
     console.error('Server error:', error);
@@ -202,11 +214,13 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
+  let heartbeat: NodeJS.Timeout | undefined;
+
   const sendEvent = (data: any) => {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
+    // @ts-ignore
+    if (res.flush) res.flush();
   };
-
-  let heartbeat: NodeJS.Timeout | undefined;
 
   try {
     if (!filename || typeof filename !== 'string') {
@@ -215,91 +229,73 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
     }
 
     const mp3Path = path.join(downloadsDir, filename);
-    const wavPath = mp3Path.replace('.mp3', '_temp.wav');
-    const outputBase = mp3Path.replace('.mp3', '_transcribed');
 
     if (!fs.existsSync(mp3Path)) {
       sendEvent({ status: 'error', message: 'Audio file not found' });
       return res.end();
     }
 
-    // Manter a conexão viva (Heartbeat) a cada 15 segundos
+    // Manter a conexão viva (Heartbeat) a cada 5 segundos
     heartbeat = setInterval(() => {
       res.write(': heartbeat\n\n');
-    }, 15000);
+      // @ts-ignore
+      if (res.flush) res.flush();
+    }, 5000);
 
     console.log(`Starting real transcription for: ${filename}`);
 
-    // Passo 1: Converter para WAV 16kHz (necessário para Whisper CLI)
-    sendEvent({ status: 'progress', percent: 5, message: 'Convertendo áudio...' });
-
-    const vlcArgs = [
-      '-I', 'dummy',
-      mp3Path,
-      `--sout=#transcode{acodec=s16l,samplerate=16000,channels=1}:standard{access=file,mux=wav,dst='${wavPath}'}`,
-      'vlc://quit',
+    const outputBase = path.join(downloadsDir, `${path.parse(String(filename)).name}_transcribed`);
+    
+    const whisperArgs = [
+      '-m', WHISPER_MODEL_PATH,
+      '-f', mp3Path,
+      '-l', 'pt',
+      '-pp',
+      '-otxt',
+      '-of', outputBase
     ];
 
-    execFile(VLC_PATH, vlcArgs, { maxBuffer: 500 * 1024 * 1024 }, (vlcError) => {
-      if (vlcError) {
-        console.error('VLC Conversion Error:', vlcError);
-        sendEvent({ status: 'error', message: 'Falha na conversão para WAV' });
+    sendEvent({ status: 'progress', percent: 10, message: 'Iniciando IA (Lendo MP3 diretamente)...' });
+
+    const whisperProcess = spawn(WHISPER_CLI_PATH, whisperArgs);
+    let transcriptionText = '';
+
+    whisperProcess.stderr.on('data', (data) => {
+      const output = data.toString();
+      const progressMatch = output.match(/progress\s*=\s*(\d+)%/);
+      if (progressMatch) {
+        const percent = parseInt(progressMatch[1]);
+        const mappedPercent = 10 + Math.floor(percent * 0.85);
+        sendEvent({ 
+          status: 'progress', 
+          percent: mappedPercent, 
+          message: `Processando IA: ${percent}%` 
+        });
+      }
+      console.log(`Whisper output: ${output.trim()}`);
+    });
+
+    whisperProcess.on('close', (code) => {
+      if (code !== 0) {
+        sendEvent({ status: 'error', message: `Whisper saiu com erro ${code}` });
         return res.end();
       }
 
-      // Passo 2: Executar Whisper CLI
-      const whisperArgs = [
-        '-m', WHISPER_MODEL_PATH,
-        '-f', wavPath,
-        '-l', 'pt', // Forçar português ou usar 'auto'
-        '-pp',      // Print progress
-        '-otxt',    // Output text file
-        '-of', outputBase
-      ];
+      const txtPath = `${outputBase}.txt`;
+      if (fs.existsSync(txtPath)) {
+        transcriptionText = fs.readFileSync(txtPath, 'utf8');
+        fs.unlinkSync(txtPath);
+      }
 
-      console.log(`Running Whisper CLI: ${WHISPER_CLI_PATH} ${whisperArgs.join(' ')}`);
+      console.log('Transcrição finalizada com sucesso.');
+      sendEvent({ status: 'completed', transcription: transcriptionText });
+      
+      setTimeout(() => res.end(), 100);
+    });
 
-      const whisperProcess = spawn(WHISPER_CLI_PATH, whisperArgs);
-      let transcriptionText = '';
-
-      whisperProcess.stderr.on('data', (data) => {
-        const output = data.toString();
-        // Tentar capturar progresso: "whisper_full: progress =  10%"
-        const progressMatch = output.match(/progress\s*=\s*(\d+)%/);
-        if (progressMatch) {
-          const percent = parseInt(progressMatch[1]);
-          // Mapear 0-100 do whisper para 10-95 do total (reservando 5% pro início e 5% pro fim)
-          const mappedPercent = 10 + Math.floor(percent * 0.85);
-          sendEvent({ status: 'progress', percent: mappedPercent });
-        }
-        console.log(`Whisper output: ${output.trim()}`);
-      });
-
-      whisperProcess.on('close', (code) => {
-        // Limpar arquivo temporário WAV
-        if (fs.existsSync(wavPath)) fs.unlinkSync(wavPath);
-
-        if (code !== 0) {
-          sendEvent({ status: 'error', message: `Whisper exited with code ${code}` });
-          return res.end();
-        }
-
-        // Ler a transcrição do arquivo .txt gerado
-        const txtPath = `${outputBase}.txt`;
-        if (fs.existsSync(txtPath)) {
-          transcriptionText = fs.readFileSync(txtPath, 'utf8');
-          fs.unlinkSync(txtPath); // Limpar txt após ler
-        }
-
-        sendEvent({ status: 'completed', transcription: transcriptionText });
-        res.end();
-      });
-
-      req.on('close', () => {
-        clearInterval(heartbeat);
-        whisperProcess.kill();
-        if (fs.existsSync(wavPath)) fs.unlinkSync(wavPath);
-      });
+    req.on('close', () => {
+      if (heartbeat) clearInterval(heartbeat);
+      whisperProcess.kill();
     });
 
   } catch (error) {

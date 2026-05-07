@@ -341,6 +341,7 @@
           </div>
 
           <button class="btn-primary" id="btnConvert">Converter para MP3</button>
+          <button class="btn-success" id="btnDownloadMp3" style="display: none">Baixar Áudio MP3</button>
           <button class="btn-reset" onclick="resetAll()">Cancelar</button>
         </div>
       </div>
@@ -458,6 +459,13 @@
         fill.style.width = '100%';
         convertedFilename = data.filename;
 
+        // Mostrar botão de download do MP3
+        const btnDownloadMp3 = document.getElementById('btnDownloadMp3');
+        btnDownloadMp3.style.display = 'block';
+        btnDownloadMp3.onclick = () => {
+          window.location.href = data.url;
+        };
+
         // Advance to Step 2
         card1.classList.remove('active');
         card1.classList.add('completed');
@@ -490,7 +498,7 @@
 
         if (data.status === 'progress') {
           fill.style.width = data.percent + '%';
-          progText.textContent = `Transcrevendo: ${data.percent}%`;
+          progText.textContent = data.message || `Transcrevendo: ${data.percent}%`;
         } else if (data.status === 'completed') {
           eventSource.close();
           transcription = data.transcription;
