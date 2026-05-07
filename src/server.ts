@@ -9,17 +9,14 @@ import OpenAI from 'openai';
 const app = express();
 const PORT = 3001;
 
-// Inicializar OpenAI (Certifique-se de definir OPENAI_API_KEY no seu ambiente)
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'SUA_CHAVE_AQUI',
-});
+
 
 // Caminho do VLC - ajuste se necessário
 const VLC_PATH = process.env.VLC_PATH || 'C:\\Program Files\\VideoLAN\\VLC\\vlc.exe';
 
 // Configuração Whisper Local
 const WHISPER_CLI_PATH = path.join(__dirname, '../Release/whisper-cli.exe');
-const WHISPER_MODEL_PATH = path.join(__dirname, '../ggml-medium.bin');
+const WHISPER_MODEL_PATH = path.join(__dirname, '../ggml-small.bin');
 
 // Criar diretórios necessários
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -46,6 +43,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
+  limits: { fileSize: 500 * 1024 * 1024 }, // Limite de 500MB por arquivo
   fileFilter: (req, file, cb) => {
     const allowedMimes = ['video/mp4', 'video/mpeg'];
     if (allowedMimes.includes(file.mimetype)) {
@@ -58,12 +56,22 @@ const upload = multer({
 
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../public')));
-app.use(express.json());
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ limit: '500mb', extended: true }));
 
 // Rota para servir a página HTML
 app.get('/', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
+
+// Função para sanitizar nomes de arquivos (remover acentos e espaços)
+const sanitizeFilename = (name: string) => {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/[^\w.-]/g, '_')        // Substitui caracteres especiais por underline
+    .toLowerCase();
+};
 
 // Rota para fazer upload e converter
 app.post('/api/convert', upload.single('file'), async (req: Request, res: Response) => {
@@ -73,7 +81,8 @@ app.post('/api/convert', upload.single('file'), async (req: Request, res: Respon
     }
 
     const inputPath = req.file.path;
-    const filename = path.parse(req.file.originalname).name;
+    const originalName = path.parse(req.file.originalname).name;
+    const filename = sanitizeFilename(originalName);
     const outputPath = path.join(downloadsDir, `${filename}.mp3`);
 
     console.log(`Converting with VLC: ${inputPath} -> ${outputPath}`);
@@ -87,7 +96,7 @@ app.post('/api/convert', upload.single('file'), async (req: Request, res: Respon
       'vlc://quit',
     ];
 
-    execFile(VLC_PATH, vlcArgs, { maxBuffer: 10 * 1024 * 1024 }, (error) => {
+    execFile(VLC_PATH, vlcArgs, { maxBuffer: 500 * 1024 * 1024 }, (error) => {
       if (error) {
         console.error('VLC error:', error);
         fs.unlink(inputPath, (err) => {
@@ -142,7 +151,7 @@ app.post('/api/transcribe', async (req: Request, res: Response) => {
       'vlc://quit',
     ];
 
-    execFile(VLC_PATH, vlcArgs, (vlcError) => {
+    execFile(VLC_PATH, vlcArgs, { maxBuffer: 500 * 1024 * 1024 }, (vlcError) => {
       if (vlcError) {
         return res.status(500).json({ error: 'Failed to convert audio for transcription' });
       }
@@ -177,9 +186,9 @@ app.post('/api/transcribe', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Transcription error:', error);
-    res.status(500).json({ 
-      error: 'Transcription failed', 
-      details: error.message || String(error) 
+    res.status(500).json({
+      error: 'Transcription failed',
+      details: error.message || String(error)
     });
   }
 });
@@ -187,7 +196,7 @@ app.post('/api/transcribe', async (req: Request, res: Response) => {
 // Rota SSE para progresso em tempo real da transcrição
 app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
   const { filename } = req.query;
-  
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -196,6 +205,8 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
   const sendEvent = (data: any) => {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
   };
+
+  let heartbeat: NodeJS.Timeout | undefined;
 
   try {
     if (!filename || typeof filename !== 'string') {
@@ -212,11 +223,16 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
       return res.end();
     }
 
+    // Manter a conexão viva (Heartbeat) a cada 15 segundos
+    heartbeat = setInterval(() => {
+      res.write(': heartbeat\n\n');
+    }, 15000);
+
     console.log(`Starting real transcription for: ${filename}`);
 
     // Passo 1: Converter para WAV 16kHz (necessário para Whisper CLI)
     sendEvent({ status: 'progress', percent: 5, message: 'Convertendo áudio...' });
-    
+
     const vlcArgs = [
       '-I', 'dummy',
       mp3Path,
@@ -224,7 +240,7 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
       'vlc://quit',
     ];
 
-    execFile(VLC_PATH, vlcArgs, (vlcError) => {
+    execFile(VLC_PATH, vlcArgs, { maxBuffer: 500 * 1024 * 1024 }, (vlcError) => {
       if (vlcError) {
         console.error('VLC Conversion Error:', vlcError);
         sendEvent({ status: 'error', message: 'Falha na conversão para WAV' });
@@ -242,7 +258,7 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
       ];
 
       console.log(`Running Whisper CLI: ${WHISPER_CLI_PATH} ${whisperArgs.join(' ')}`);
-      
+
       const whisperProcess = spawn(WHISPER_CLI_PATH, whisperArgs);
       let transcriptionText = '';
 
@@ -280,12 +296,14 @@ app.get('/api/transcribe-progress', async (req: Request, res: Response) => {
       });
 
       req.on('close', () => {
+        clearInterval(heartbeat);
         whisperProcess.kill();
         if (fs.existsSync(wavPath)) fs.unlinkSync(wavPath);
       });
     });
 
   } catch (error) {
+    if (heartbeat) clearInterval(heartbeat);
     console.error('SSE Error:', error);
     sendEvent({ status: 'error', message: 'Erro interno no servidor' });
     res.end();
@@ -345,7 +363,7 @@ app.listen(PORT, () => {
   console.log(`🎵 MP4 to MP3 Converter running at http://localhost:${PORT}`);
   console.log('Uploads directory:', uploadsDir);
   console.log('Downloads directory:', downloadsDir);
-  
+
   // Verificar se os binários do Whisper estão presentes
   if (!fs.existsSync(WHISPER_CLI_PATH)) {
     console.error(`❌ Whisper CLI não encontrado em: ${WHISPER_CLI_PATH}`);
