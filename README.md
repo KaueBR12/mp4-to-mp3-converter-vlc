@@ -15,9 +15,9 @@ A robust application to convert MP4 videos into MP3 audio and generate high-prec
 Before you begin, you will need:
 
 1.  **Node.js** (v16 or higher)
-2.  **VLC Media Player** (Default path: `C:\Program Files\VideoLAN\VLC\vlc.exe`)
+2.  **VLC Media Player** 
 
-3.  ### 📥 How to Install VLC
+### 📥 How to Install VLC
 
 VLC is required to handle the audio conversion. Follow the steps for your operating system:
 
@@ -30,7 +30,7 @@ VLC is required to handle the audio conversion. Follow the steps for your operat
 **macOS:**
 ```bash
 brew install vlc
------------------
+````
 
 ## 🚀 Environment Setup
 
