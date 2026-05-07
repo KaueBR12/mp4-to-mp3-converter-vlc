@@ -1,134 +1,78 @@
-# 🎵 MP4 to MP3 Converter
+# 🎵 MP4 to MP3 Converter + Transcrição AI (Whisper)
 
-Uma aplicação web elegante para converter arquivos MP4 em MP3 com interface intuitiva.
+Uma aplicação robusta para converter vídeos MP4 em áudio MP3 e gerar transcrições automáticas de alta precisão usando inteligência artificial local (**OpenAI Whisper**).
 
 ## ✨ Características
 
-- ✅ Interface web limpa e responsiva
-- ✅ Drag & drop para upload
-- ✅ Conversão rápida com FFmpeg
-- ✅ Barra de progresso em tempo real
-- ✅ Download automático após conversão
-- ✅ Limpeza automática de arquivos
+- ✅ **Conversão Veloz:** Utiliza o VLC Media Player para extração de áudio de alta fidelidade.
+- ✅ **Transcrição AI Local:** Integração com `whisper.cpp` para transformar áudio em texto sem enviar dados para a nuvem.
+- ✅ **Progresso em Tempo Real:** Acompanhe a transcrição passo a passo via Server-Sent Events (SSE).
+- ✅ **Relatórios Markdown:** Gera automaticamente um arquivo `.md` com a transcrição formatada.
+- ✅ **Interface Moderna:** Design limpo, responsivo e intuitivo.
 
 ## 📋 Pré-requisitos
 
-- Node.js (v16+)
-- FFmpeg instalado no sistema
+Antes de começar, você precisará ter instalado:
 
-### Instalar FFmpeg
+1.  **Node.js** (v16 ou superior)
+2.  **VLC Media Player** (Padrão: `C:\Program Files\VideoLAN\VLC\vlc.exe`)
 
-**Ubuntu/Debian:**
-```bash
-sudo apt-get update
-sudo apt-get install ffmpeg
-```
+## 🚀 Configuração do Ambiente
 
-**macOS (com Homebrew):**
-```bash
-brew install ffmpeg
-```
+Como os binários pesados e modelos de IA não são enviados para o GitHub, você deve configurá-los manualmente:
 
-**Windows:**
-Baixe em: https://ffmpeg.org/download.html
-Ou use: `choco install ffmpeg`
+### 1. Binários do Whisper
+Baixe a versão correta do `whisper-cli` para o seu sistema:
+- Acesse [whisper.cpp Releases](https://github.com/ggerganov/whisper.cpp/releases).
+- Se você **NÃO** tem placa NVIDIA: Baixe `whisper-bin-x64.zip`.
+- Se você **TEM** placa NVIDIA: Baixe `whisper-cublas-12.4.0-bin-x64.zip`.
+- Extraia o conteúdo para a pasta `mp4-to-mp3-converter/Release/`.
+- Certifique-se de que o executável se chama `whisper-cli.exe`.
 
-## 🚀 Instalação e Uso
+### 2. Modelo de Linguagem
+- Baixe o modelo `ggml-medium.bin` (ou outro de sua preferência) em: [Hugging Face Whisper Models](https://huggingface.co/ggerganov/whisper.cpp/tree/main).
+- Coloque o arquivo `.bin` na raiz da pasta `mp4-to-mp3-converter/`.
 
-### 1. Clonar ou copiar os arquivos
-```bash
-cd mp4-to-mp3-converter
-```
+### 3. Visual C++ Redistributable
+- Instale o [Microsoft Visual C++ 2015-2022](https://aka.ms/vs/17/release/vc_redist.x64.exe) (necessário para rodar os binários no Windows).
 
-### 2. Instalar dependências
-```bash
-npm install
-```
+## 🛠️ Instalação e Uso
 
-### 3. Compilar TypeScript (opcional, necessário para produção)
-```bash
-npm run build
-```
+1.  **Instale as dependências do Node:**
+    ```bash
+    cd mp4-to-mp3-converter
+    npm install
+    ```
 
-### 4. Iniciar o servidor em desenvolvimento
-```bash
-npm run dev
-```
+2.  **Inicie o servidor:**
+    ```bash
+    npm run dev
+    ```
 
-Ou em produção:
-```bash
-npm run build
-npm start
-```
-
-### 5. Abrir no navegador
-```
-http://localhost:3000
-```
+3.  **Acesse no navegador:**
+    `http://localhost:3001`
 
 ## 📁 Estrutura do Projeto
 
 ```
 mp4-to-mp3-converter/
+├── Release/               # Binários do Whisper (whisper-cli.exe e DLLs)
 ├── src/
-│   └── server.ts          # Servidor Express em TypeScript
-├── public/
-│   └── index.html         # Interface web
-├── uploads/               # Pasta para arquivos sendo processados
-├── downloads/             # Pasta para arquivos convertidos
-├── package.json
-├── tsconfig.json
-└── README.md
+│   └── server.ts          # Servidor Express com lógica VLC e Whisper
+├── public/                # Frontend da aplicação
+├── uploads/               # Arquivos temporários de vídeo
+├── downloads/             # Arquivos MP3 e transcrições geradas
+├── ggml-medium.bin        # Modelo da IA (Deve ser baixado manualmente)
+└── package.json
 ```
 
-## 🎯 Como Usar
+## ⚙️ Variáveis de Ambiente
 
-1. Abra http://localhost:3000 no navegador
-2. Clique no área ou arraste um arquivo MP4
-3. Clique em "Converter"
-4. Aguarde a conversão
-5. Clique em "Baixar MP3"
+Caso seu VLC esteja instalado em um caminho diferente, você pode configurar a variável `VLC_PATH` no seu sistema ou editar diretamente no `server.ts`.
 
-## ⚙️ Configurações
-
-### Qualidade do Áudio
-
-Você pode ajustar a qualidade do áudio no arquivo `src/server.ts`:
-
-```typescript
-.audioBitrate('192k')        // 128k, 192k, 256k, 320k
-.audioFrequency(44100)       // 44100, 48000
-.audioChannels(2)            // 1 (mono), 2 (stereo)
-```
-
-## 🔒 Segurança
-
-- ✅ Validação de tipo de arquivo
-- ✅ Limite de upload (ajustável)
-- ✅ Limpeza automática de arquivos
-- ✅ CORS habilitado
-
-## 📝 Notas
-
-- Máximo recomendado: 500MB
-- Arquivos são deletados automaticamente após download
-- Suporta apenas MP4 no momento (fácil adicionar mais formatos)
-
-## 🐛 Solução de Problemas
-
-**Erro: "ffmpeg: command not found"**
-- FFmpeg não está instalado. Veja pré-requisitos acima.
-
-**Erro: "ENOENT: no such file or directory"**
-- Certifique-se que os diretórios `uploads/` e `downloads/` existem.
-
-**Conversão lenta**
-- Arquivos muito grandes demoram mais. Considere comprimir antes.
-
-## 📄 Licença
-
-MIT
+## 🔒 Segurança e Limpeza
+- A aplicação valida apenas arquivos `.mp4`.
+- Os arquivos são removidos automaticamente do servidor 1 segundo após o download para economizar espaço em disco.
 
 ---
-
-Desenvolvido com ❤️ em TypeScript + Node.js
+Desenvolvido para máxima privacidade e performance local. 🚀
