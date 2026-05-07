@@ -17,6 +17,21 @@ Before you begin, you will need:
 1.  **Node.js** (v16 or higher)
 2.  **VLC Media Player** (Default path: `C:\Program Files\VideoLAN\VLC\vlc.exe`)
 
+3.  ### 📥 How to Install VLC
+
+VLC is required to handle the audio conversion. Follow the steps for your operating system:
+
+**Windows:**
+1. Go to the official website: [videolan.org/vlc](https://www.videolan.org/vlc/)
+2. Click the **"Download VLC"** button.
+3. Run the installer and follow the default instructions.
+4. (Optional) If you installed it in a custom path, update the `VLC_PATH` in `src/server.ts`.
+
+**macOS:**
+```bash
+brew install vlc
+-----------------
+
 ## 🚀 Environment Setup
 
 Since heavy binary files and AI models are not uploaded to GitHub, you must set them up manually:
