@@ -1,4 +1,4 @@
-# 🎬 MP4 to Text & PDF to Markdown Converter
+# 🎬 MP4 to MP3 & PDF to Markdown Converter
 
 Uma aplicação web modular, completa e de alto desempenho que oferece duas ferramentas essenciais em uma única interface:
 1. **Vídeo para Texto**: Converte vídeos MP4 locais em MP3 usando VLC e depois transcreve o áudio para texto (Markdown) localmente utilizando a Inteligência Artificial do Whisper.
