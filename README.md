@@ -1,95 +1,103 @@
-# 🎵 MP4 to MP3 Converter + AI Transcription (Whisper)
+# 🎬 MP4 to Text & PDF to Markdown Converter
 
-A robust application to convert MP4 videos into MP3 audio and generate high-precision automatic transcriptions using local Artificial Intelligence (**OpenAI Whisper**).
-
-## ✨ Features
-
-- ✅ **High-Speed Conversion:** Uses VLC Media Player for high-fidelity audio extraction.
-- ✅ **Local AI Transcription:** Integration with `whisper.cpp` to transform audio into text without sending data to the cloud.
-- ✅ **Real-Time Progress:** Track the transcription process step-by-step via Server-Sent Events (SSE).
-- ✅ **Markdown Reports:** Automatically generates a `.md` file with the formatted transcription.
-- ✅ **Modern Interface:** Clean, responsive, and intuitive design.
-
-## 📋 Prerequisites
-
-Before you begin, you will need:
-
-1.  **Node.js** (v16 or higher)
-2.  **VLC Media Player** 
-
-### 📥 How to Install VLC
-
-VLC is required to handle the audio conversion. Follow the steps for your operating system:
-
-**Windows:**
-1. Go to the official website: [videolan.org/vlc](https://www.videolan.org/vlc/)
-2. Click the **"Download VLC"** button.
-3. Run the installer and follow the default instructions.
-4. (Optional) If you installed it in a custom path, update the `VLC_PATH` in `src/server.ts`.
-
-**macOS:**
-```bash
-brew install vlc
-````
-
-## 🚀 Environment Setup
-
-Since heavy binary files and AI models are not uploaded to GitHub, you must set them up manually:
-
-### 1. Whisper Binaries
-Download the correct `whisper-cli` version for your system:
-- Go to [whisper.cpp Releases](https://github.com/ggerganov/whisper.cpp/releases).
-- If you **DO NOT** have an NVIDIA GPU: Download `whisper-bin-x64.zip`.
-- If you **DO** have an NVIDIA GPU: Download `whisper-cublas-12.4.0-bin-x64.zip`.
-- Extract the contents into the `mp4-to-mp3-converter/Release/` folder.
-- Ensure the executable is named `whisper-cli.exe`.
-
-### 2. Language Model
-- Download the `ggml-medium.bin` model (or any other of your choice) from: [Hugging Face Whisper Models](https://huggingface.co/ggerganov/whisper.cpp/tree/main).
-- Place the `.bin` file in the root of the `mp4-to-mp3-converter/` folder.
-
-### 3. Visual C++ Redistributable
-- Install [Microsoft Visual C++ 2015-2022](https://aka.ms/vs/17/release/vc_redist.x64.exe) (required to run binaries on Windows).
-
-## 🛠️ Installation and Usage
-
-1.  **Install Node dependencies:**
-    ```bash
-    cd mp4-to-mp3-converter
-    npm install
-    ```
-
-2.  **Start the server:**
-    ```bash
-    npm run dev
-    ```
-
-3.  **Access in your browser:**
-    `http://localhost:3001`
-
-## 📁 Project Structure
-
-```
-mp4-to-mp3-converter/
-├── Release/               # Binários do Whisper (whisper-cli.exe e DLLs)
-├── src/
-│   └── server.ts          # Servidor Express com lógica VLC e Whisper
-├── public/                # Frontend da aplicação
-├── uploads/               # Arquivos temporários de vídeo
-├── downloads/             # Arquivos MP3 e transcrições geradas
-├── ggml-medium.bin        # Modelo da IA (Deve ser baixado manualmente)
-└── package.json
-```
-
-
-## ⚙️ Environment Variables
-
-If your VLC is installed in a different path, you can set the `VLC_PATH` environment variable in your system or edit it directly in `server.ts`.
-
-## 🔒 Security and Cleanup
-- The application only validates `.mp4` files.
-- Files are automatically removed from the server 1 second after download to save disk space.
+Uma aplicação web modular, completa e de alto desempenho que oferece duas ferramentas essenciais em uma única interface:
+1. **Vídeo para Texto**: Converte vídeos MP4 locais em MP3 usando VLC e depois transcreve o áudio para texto (Markdown) localmente utilizando a Inteligência Artificial do Whisper.
+2. **PDF para Markdown**: Converte arquivos PDF em texto bruto (formato Markdown) de forma extremamente rápida.
 
 ---
-Developed for maximum privacy and local performance. 🚀
 
+## 🚀 Tecnologias Utilizadas
+- **Back-end:** Node.js, Express, TypeScript, Multer (para uploads seguros).
+- **Front-end:** HTML5, CSS3, JavaScript Vanilla Orientado a Objetos (ES6 Classes).
+- **Motores Locais:** VLC Media Player (para decodificação de mídia) e Whisper CLI (IA para transcrição de áudio).
+- **Processamento de PDF:** `pdf-parse` e `pdfjs-dist`.
+
+---
+
+## ⚠️ Pré-requisitos (MUITO IMPORTANTE)
+
+Para que o projeto rode perfeitamente no seu computador (ou no de outra pessoa), **você precisa ter as seguintes ferramentas instaladas**:
+
+1. **Node.js (Versão v20.x ou v22.x LTS)**
+   - **Crucial:** O projeto utiliza bibliotecas modernas de PDF (`pdfjs-dist` versão 4+) que exigem nativamente funções modernas do Node.js (como o `DOMMatrix` e `getBuiltinModule`).
+   - Se você estiver usando o Node v18 ou inferior, o projeto **vai apresentar erros**. Baixe a versão mais nova em [nodejs.org](https://nodejs.org/).
+
+2. **VLC Media Player**
+   - O projeto utiliza os motores do VLC de forma oculta para converter vídeos rapidamente.
+   - O VLC deve estar instalado no caminho padrão do Windows: `C:\Program Files\VideoLAN\VLC\vlc.exe`.
+
+3. **Arquivos do Whisper (Inteligência Artificial)**
+   - Os binários do `whisper-cli.exe` devem estar presentes na pasta base do projeto (`/Release/whisper-cli.exe`).
+   - O modelo de linguagem do Whisper (`ggml-small.bin`) também deve estar na pasta raiz apropriada.
+
+---
+
+## 💻 Instalação
+
+Abra o seu terminal na pasta do projeto e execute os comandos abaixo:
+
+```bash
+# 1. Instale todas as dependências do projeto
+npm install
+
+# 2. Verifique se não há erros na instalação
+```
+
+---
+
+## 🏃 Como Rodar o Projeto
+
+Com as dependências instaladas, basta iniciar o servidor de desenvolvimento:
+
+```bash
+npm run dev
+```
+
+Você verá as seguintes mensagens de sucesso no seu terminal se tudo estiver correto:
+```text
+🎵 MP4 to MP3 Converter running at http://localhost:3001
+✅ Whisper CLI detectado.
+✅ Modelo Whisper detectado.
+```
+
+Abra seu navegador e acesse: **[http://localhost:3001](http://localhost:3001)**
+
+---
+
+## 📁 Estrutura do Projeto (Clean Code)
+
+O projeto foi refatorado utilizando as melhores práticas de Clean Code, MVC e SOLID:
+
+```text
+📂 src/
+ ┣ 📂 config/
+ ┃ ┗ 📜 paths.ts          # Mapeamento de todos os caminhos do sistema
+ ┣ 📂 controllers/
+ ┃ ┣ 📜 pdfController.ts  # Gerencia as requisições de PDF
+ ┃ ┗ 📜 videoController.ts# Gerencia as requisições de Vídeo e Transcrição
+ ┣ 📂 middlewares/
+ ┃ ┗ 📜 upload.ts         # Regras de segurança para os arquivos enviados
+ ┣ 📂 routes/
+ ┃ ┣ 📜 pdf.routes.ts
+ ┃ ┗ 📜 video.routes.ts
+ ┣ 📂 services/
+ ┃ ┣ 📜 vlc.service.ts    # Lógica isolada dos processos do VLC
+ ┃ ┗ 📜 whisper.service.ts# Lógica isolada da Inteligência Artificial
+ ┣ 📜 app.ts              # Configuração limpa do Express
+ ┗ 📜 server.ts           # Ponto de entrada (Entry point)
+
+📂 public/                # Front-end (UI e Estilos)
+ ┣ 📂 css/
+ ┃ ┗ 📜 style.css
+ ┣ 📂 js/
+ ┃ ┣ 📜 pdfFlow.js        # Classe responsável pelo conversor de PDF
+ ┃ ┣ 📜 videoFlow.js      # Classe responsável pela conversão e eventos SSE (progresso)
+ ┃ ┗ 📜 utils.js          # Funções globais utilitárias
+ ┗ 📜 index.html          # Estrutura visual modularizada e paginada
+```
+
+---
+
+## 💡 Informações Adicionais
+- **Privacidade e Segurança:** O projeto processa tudo **localmente**. Seus arquivos e documentos não são enviados para nenhuma nuvem externa.
+- **Limpeza Automática:** Todos os arquivos de conversão temporários (MP3s, WAVs e MDs) criados na pasta `/downloads` são **apagados automaticamente do sistema** 1 segundo após o navegador confirmar o término do download, garantindo que o HD não fique cheio de lixo residual.
