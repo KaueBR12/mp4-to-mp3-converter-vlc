@@ -9,128 +9,135 @@
 </head>
 
 <body>
-  <h1 class="main-title">Conversor de MP4 para MP3 </h1>
+  <div class="tabs-container">
+    <button class="tab-btn active" id="tabVideo" onclick="window.switchTab('video')">🎬 MP4 para MP3</button>
+    <button class="tab-btn" id="tabPdf" onclick="window.switchTab('pdf')">📄 PDF para .MD</button>
+  </div>
 
-  <div class="cards-container">
-    <!-- STEP 1: MP4 TO MP3 -->
-    <div class="card active" id="card1">
-      <div class="step-badge">1</div>
-      <div class="header">
-        <div class="icon">🎬</div>
-        <h2>Conversão</h2>
-        <p class="subtitle">Transforme seu vídeo MP4 em áudio MP3</p>
+  <div id="videoView" class="view-section active">
+    <h1 class="main-title">Conversor de MP4 para MP3</h1>
+    <div class="cards-container">
+      <!-- STEP 1: MP4 TO MP3 -->
+      <div class="card active" id="card1">
+        <div class="step-badge">1</div>
+        <div class="header">
+          <div class="icon">🎬</div>
+          <h2>Conversão</h2>
+          <p class="subtitle">Transforme seu vídeo MP4 em áudio MP3</p>
+        </div>
+
+        <div class="content-area">
+          <div class="message" id="msg1"></div>
+
+          <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <span class="upload-icon">📁</span>
+            <div class="upload-text">Selecione o vídeo MP4</div>
+          </div>
+          <input type="file" id="fileInput" accept=".mp4" style="display: none" />
+
+          <div id="fileSelectedInfo" style="display: none">
+            <div class="file-info">
+              <div id="fileName"
+                style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+              <div id="fileSize" style="font-size: 11px; color: #636e72;"></div>
+            </div>
+
+            <div class="progress-container" id="prog1">
+              <div class="progress-bar">
+                <div class="progress-fill" id="fill1"></div>
+              </div>
+            </div>
+
+            <button class="btn-primary" id="btnConvert">Converter para MP3</button>
+            <button class="btn-success" id="btnDownloadMp3" style="display: none">Baixar Áudio MP3</button>
+            <button class="btn-reset" onclick="resetAll()">Cancelar</button>
+          </div>
+        </div>
       </div>
 
-      <div class="content-area">
-        <div class="message" id="msg1"></div>
-
-        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-          <span class="upload-icon">📁</span>
-          <div class="upload-text">Selecione o vídeo MP4</div>
+      <!-- STEP 2: TRANSCRIPTION -->
+      <div class="card" id="card2">
+        <div class="step-badge">2</div>
+        <div class="header">
+          <div class="icon">✍️</div>
+          <h2>Transcrição</h2>
+          <p class="subtitle">Extraia o texto falado do áudio convertido</p>
         </div>
-        <input type="file" id="fileInput" accept=".mp4" style="display: none" />
 
-        <div id="fileSelectedInfo" style="display: none">
-          <div class="file-info">
-            <div id="fileName"
-              style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
-            <div id="fileSize" style="font-size: 11px; color: #636e72;"></div>
-          </div>
-
-          <div class="progress-container" id="prog1">
+        <div class="content-area">
+          <div class="message" id="msg2"></div>
+          <div class="progress-container visible" id="prog2" style="display: none">
+            <div style="text-align: center; font-size: 12px; margin-bottom: 5px;" id="progText2">Preparando
+              transcrição...
+            </div>
             <div class="progress-bar">
-              <div class="progress-fill" id="fill1"></div>
+              <div class="progress-fill" id="fill2" style="width: 0%"></div>
             </div>
           </div>
-
-          <button class="btn-primary" id="btnConvert">Converter para MP3</button>
-          <button class="btn-success" id="btnDownloadMp3" style="display: none">Baixar Áudio MP3</button>
-          <button class="btn-reset" onclick="resetAll()">Cancelar</button>
+          <textarea class="transcription-box" id="transcriptionText"
+            placeholder="O texto transcrito aparecerá aqui..."></textarea>
+          <button class="btn-primary" id="btnTranscribe" disabled>Iniciar Transcrição</button>
         </div>
       </div>
-    </div>
 
-    <!-- STEP 2: TRANSCRIPTION -->
-    <div class="card" id="card2">
-      <div class="step-badge">2</div>
-      <div class="header">
-        <div class="icon">✍️</div>
-        <h2>Transcrição</h2>
-        <p class="subtitle">Extraia o texto falado do áudio convertido</p>
-      </div>
+      <!-- STEP 3: MARKDOWN -->
+      <div class="card" id="card3">
+        <div class="step-badge">3</div>
+        <div class="header">
+          <div class="icon">📄</div>
+          <h2>Markdown</h2>
+          <p class="subtitle">Gere o arquivo final pronto para uso</p>
+        </div>
 
-      <div class="content-area">
-        <div class="message" id="msg2"></div>
-        <div class="progress-container visible" id="prog2" style="display: none">
-          <div style="text-align: center; font-size: 12px; margin-bottom: 5px;" id="progText2">Preparando transcrição...
+        <div class="content-area">
+          <div class="message" id="msg3"></div>
+          <div class="preview-box" id="mdPreview">
+            Aguardando transcrição...
           </div>
-          <div class="progress-bar">
-            <div class="progress-fill" id="fill2" style="width: 0%"></div>
-          </div>
+          <button class="btn-success" id="btnSaveMd" disabled>Gerar e Baixar .md</button>
+          <button class="btn-reset" id="btnFinish" style="display: none" onclick="resetAll()">Nova Conversão</button>
         </div>
-        <textarea class="transcription-box" id="transcriptionText"
-          placeholder="O texto transcrito aparecerá aqui..."></textarea>
-        <button class="btn-primary" id="btnTranscribe" disabled>Iniciar Transcrição</button>
-      </div>
-    </div>
-
-    <!-- STEP 3: MARKDOWN -->
-    <div class="card" id="card3">
-      <div class="step-badge">3</div>
-      <div class="header">
-        <div class="icon">📄</div>
-        <h2>Markdown</h2>
-        <p class="subtitle">Gere o arquivo final pronto para uso</p>
-      </div>
-
-      <div class="content-area">
-        <div class="message" id="msg3"></div>
-        <div class="preview-box" id="mdPreview">
-          Aguardando transcrição...
-        </div>
-        <button class="btn-success" id="btnSaveMd" disabled>Gerar e Baixar .md</button>
-        <button class="btn-reset" id="btnFinish" style="display: none" onclick="resetAll()">Nova Conversão</button>
       </div>
     </div>
   </div>
 
-  <h1 class="main-title" style="margin-top: 60px;">Conversor de PDF para Markdown</h1>
-
-  <div class="cards-container">
-    <!-- PDF TO MD CARD -->
-    <div class="card active" id="cardPdf"
-      style="margin: 0 auto; filter: none; opacity: 1; pointer-events: auto;">
-      <div class="header">
-        <div class="icon">📄</div>
-        <h2>Conversor de PDF</h2>
-        <p class="subtitle">Extraia o texto cru do seu PDF para um arquivo .md baixável</p>
-      </div>
-
-      <div class="content-area">
-        <div class="message" id="msgPdf"></div>
-
-        <div class="upload-area" id="uploadAreaPdf" onclick="document.getElementById('fileInputPdf').click()">
-          <span class="upload-icon">📁</span>
-          <div class="upload-text">Selecione o arquivo PDF</div>
+  <div id="pdfView" class="view-section">
+    <h1 class="main-title">Conversão de PDF para Markdown</h1>
+    <div class="cards-container">
+      <!-- PDF TO MD CARD -->
+      <div class="card active" id="cardPdf" style="margin: 0 auto; filter: none; opacity: 1; pointer-events: auto;">
+        <div class="header">
+          <div class="icon">📄</div>
+          <h2>Conversor de PDF</h2>
+          <p class="subtitle">Extraia o texto cru do seu PDF para um arquivo .md baixável</p>
         </div>
-        <input type="file" id="fileInputPdf" accept=".pdf" style="display: none" />
 
-        <div id="fileSelectedInfoPdf" style="display: none">
-          <div class="file-info">
-            <div id="fileNamePdf"
-              style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
-            <div id="fileSizePdf" style="font-size: 11px; color: #636e72;"></div>
+        <div class="content-area">
+          <div class="message" id="msgPdf"></div>
+
+          <div class="upload-area" id="uploadAreaPdf" onclick="document.getElementById('fileInputPdf').click()">
+            <span class="upload-icon">📁</span>
+            <div class="upload-text">Selecione o arquivo PDF</div>
           </div>
+          <input type="file" id="fileInputPdf" accept=".pdf" style="display: none" />
 
-          <div class="progress-container" id="progPdf">
-            <div class="progress-bar">
-              <div class="progress-fill" id="fillPdf"></div>
+          <div id="fileSelectedInfoPdf" style="display: none">
+            <div class="file-info">
+              <div id="fileNamePdf"
+                style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+              <div id="fileSizePdf" style="font-size: 11px; color: #636e72;"></div>
             </div>
-          </div>
 
-          <button class="btn-primary" id="btnConvertPdf">Converter para Markdown</button>
-          <button class="btn-success" id="btnDownloadMdPdf" style="display: none">Baixar Markdown</button>
-          <button class="btn-reset" onclick="resetPdf()">Cancelar</button>
+            <div class="progress-container" id="progPdf">
+              <div class="progress-bar">
+                <div class="progress-fill" id="fillPdf"></div>
+              </div>
+            </div>
+
+            <button class="btn-primary" id="btnConvertPdf">Converter para Markdown</button>
+            <button class="btn-success" id="btnDownloadMdPdf" style="display: none">Baixar Markdown</button>
+            <button class="btn-reset" onclick="resetPdf()">Cancelar</button>
+          </div>
         </div>
       </div>
     </div>

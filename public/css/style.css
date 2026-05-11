@@ -284,6 +284,58 @@
       text-align: center;
     }
 
+    /* Tabs and Views */
+    .tabs-container {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 2px solid transparent;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: none;
+      width: auto;
+      margin-bottom: 0;
+    }
+
+    .tab-btn:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      border-color: transparent;
+    }
+
+    .view-section {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .view-section.active {
+      display: flex;
+    }
+
     @media (max-width: 768px) {
       .cards-container {
         flex-direction: column;
