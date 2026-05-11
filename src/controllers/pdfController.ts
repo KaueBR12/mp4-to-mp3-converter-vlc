@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
-import { PDFParse } from 'pdf-parse';
+const pdf = require('pdf-parse');
 import { sanitizeFilename } from '../utils/fileUtils';
 import { downloadsDir } from '../config/paths';
 
@@ -19,15 +19,22 @@ export const pdfToMarkdown = async (req: Request, res: Response) => {
 
     const dataBuffer = fs.readFileSync(inputPath);
     
+    // De acordo com o debug, esta versão usa a classe PDFParse
+    const { PDFParse } = pdf;
+    
+    if (!PDFParse) {
+      throw new Error('Classe PDFParse não encontrada no módulo. Verifique a versão da biblioteca.');
+    }
+
     const parser = new PDFParse({ data: dataBuffer });
     const data = await parser.getText();
-    await parser.destroy();
     
-    const textContent = data.text;
-    const markdownContent = `${textContent}`;
+    // O conteúdo extraído fica em data.text
+    const markdownContent = data.text || '';
 
     fs.writeFileSync(outputPath, markdownContent);
 
+    // Limpar arquivo temporário de upload
     fs.unlink(inputPath, (err) => {
       if (err) console.error('Error deleting input file:', err);
     });
