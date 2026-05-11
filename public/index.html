@@ -5,308 +5,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Video Transcription Flow</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-      background: linear-gradient(135deg, #3e1e42 0%, #23023f 100%);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
-    }
-
-    .main-title {
-      color: white;
-      font-size: 32px;
-      margin-bottom: 40px;
-      text-align: center;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .cards-container {
-      display: flex;
-      gap: 30px;
-      max-width: 1200px;
-      width: 100%;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      padding: 40px 30px;
-      flex: 1;
-      min-width: 320px;
-      max-width: 380px;
-      display: flex;
-      flex-direction: column;
-      animation: fadeIn 0.6s ease-out;
-      position: relative;
-      transition: all 0.3s ease;
-      opacity: 0.5;
-      filter: grayscale(0.8);
-      pointer-events: none;
-    }
-
-    .card.active {
-      opacity: 1;
-      filter: grayscale(0);
-      pointer-events: auto;
-      transform: translateY(-5px);
-    }
-
-    .card.completed {
-      opacity: 0.9;
-      filter: grayscale(0);
-      pointer-events: auto;
-      border: 2px solid #38ef7d;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .step-badge {
-      position: absolute;
-      top: -15px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #764ba2;
-      color: white;
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 18px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 25px;
-    }
-
-    .icon {
-      font-size: 40px;
-      margin-bottom: 10px;
-      display: inline-block;
-    }
-
-    h2 {
-      font-size: 22px;
-      color: #2d3436;
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-
-    .subtitle {
-      color: #636e72;
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .content-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    /* Step 1 Styles */
-    .upload-area {
-      border: 2px dashed #b2bec3;
-      border-radius: 12px;
-      padding: 30px 15px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background-color: #f8f9fa;
-      margin-bottom: 20px;
-    }
-
-    .upload-area:hover {
-      border-color: #667eea;
-      background-color: #f0f3ff;
-    }
-
-    .upload-icon {
-      font-size: 30px;
-      margin-bottom: 10px;
-      display: block;
-    }
-
-    .upload-text {
-      font-weight: 600;
-      font-size: 14px;
-      color: #2d3436;
-    }
-
-    /* Step 2 Styles */
-    .transcription-box {
-      width: 100%;
-      height: 150px;
-      border: 1px solid #dfe6e9;
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 13px;
-      color: #2d3436;
-      resize: none;
-      background-color: #fcfcfc;
-      margin-bottom: 15px;
-    }
-
-    /* Step 3 Styles */
-    .preview-box {
-      background: #f1f2f6;
-      border-radius: 10px;
-      padding: 15px;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 12px;
-      height: 150px;
-      overflow-y: auto;
-      margin-bottom: 15px;
-      border: 1px solid #dfe6e9;
-    }
-
-    .file-info {
-      background-color: #f0f3ff;
-      border-left: 4px solid #667eea;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      font-size: 13px;
-    }
-
-    .progress-container {
-      margin-bottom: 20px;
-      display: none;
-    }
-
-    .progress-container.visible {
-      display: block;
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 6px;
-      background-color: #e1e8ed;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 10px;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .btn-success {
-      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
-    }
-
-    .btn-reset {
-      background-color: #ecf0f1;
-      color: #2d3436;
-    }
-
-    .message {
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      font-size: 12px;
-      display: none;
-    }
-
-    .message.visible {
-      display: block;
-    }
-
-    .message.error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .message.success {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .footer {
-      margin-top: 40px;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 12px;
-      text-align: center;
-    }
-
-    @media (max-width: 768px) {
-      .cards-container {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .card {
-        width: 100%;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 
 <body>
-  <h1 class="main-title">Fluxo de Conversão </h1>
+  <h1 class="main-title">Conversor de MP4 para MP3 </h1>
 
   <div class="cards-container">
     <!-- STEP 1: MP4 TO MP3 -->
@@ -391,184 +94,55 @@
     </div>
   </div>
 
+  <h1 class="main-title" style="margin-top: 60px;">Conversor de PDF para Markdown</h1>
+
+  <div class="cards-container">
+    <!-- PDF TO MD CARD -->
+    <div class="card active" id="cardPdf"
+      style="margin: 0 auto; filter: none; opacity: 1; pointer-events: auto;">
+      <div class="header">
+        <div class="icon">📄</div>
+        <h2>Conversor de PDF</h2>
+        <p class="subtitle">Extraia o texto cru do seu PDF para um arquivo .md baixável</p>
+      </div>
+
+      <div class="content-area">
+        <div class="message" id="msgPdf"></div>
+
+        <div class="upload-area" id="uploadAreaPdf" onclick="document.getElementById('fileInputPdf').click()">
+          <span class="upload-icon">📁</span>
+          <div class="upload-text">Selecione o arquivo PDF</div>
+        </div>
+        <input type="file" id="fileInputPdf" accept=".pdf" style="display: none" />
+
+        <div id="fileSelectedInfoPdf" style="display: none">
+          <div class="file-info">
+            <div id="fileNamePdf"
+              style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+            <div id="fileSizePdf" style="font-size: 11px; color: #636e72;"></div>
+          </div>
+
+          <div class="progress-container" id="progPdf">
+            <div class="progress-bar">
+              <div class="progress-fill" id="fillPdf"></div>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="btnConvertPdf">Converter para Markdown</button>
+          <button class="btn-success" id="btnDownloadMdPdf" style="display: none">Baixar Markdown</button>
+          <button class="btn-reset" onclick="resetPdf()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="footer">
     Processamento seguro | Arquivos deletados automaticamente após o uso
   </div>
 
-  <script>
-    // Elements
-    const fileInput = document.getElementById('fileInput');
-    const btnConvert = document.getElementById('btnConvert');
-    const btnTranscribe = document.getElementById('btnTranscribe');
-    const btnSaveMd = document.getElementById('btnSaveMd');
-    const transcriptionText = document.getElementById('transcriptionText');
-    const mdPreview = document.getElementById('mdPreview');
-
-    // Cards
-    const card1 = document.getElementById('card1');
-    const card2 = document.getElementById('card2');
-    const card3 = document.getElementById('card3');
-
-    // State
-    let selectedFile = null;
-    let convertedFilename = null;
-    let transcription = "";
-
-    // Step 1: File Selection
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        selectedFile = file;
-        document.getElementById('fileName').textContent = file.name;
-        document.getElementById('fileSize').textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-        document.getElementById('uploadArea').style.display = 'none';
-        document.getElementById('fileSelectedInfo').style.display = 'block';
-      }
-    });
-
-    // Step 1: Conversion
-    btnConvert.addEventListener('click', async () => {
-      if (!selectedFile) return;
-
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      btnConvert.disabled = true;
-      const prog = document.getElementById('prog1');
-      const fill = document.getElementById('fill1');
-      prog.style.display = 'block';
-
-      // Simulate progress
-      let p = 0;
-      const interval = setInterval(() => {
-        if (p < 90) p += 5;
-        fill.style.width = p + '%';
-      }, 200);
-
-      try {
-        const response = await fetch('/api/convert', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await response.json();
-        clearInterval(interval);
-
-        if (!response.ok) throw new Error(data.error || 'Erro na conversão');
-
-        fill.style.width = '100%';
-        convertedFilename = data.filename;
-
-        // Mostrar botão de download do MP3
-        const btnDownloadMp3 = document.getElementById('btnDownloadMp3');
-        btnDownloadMp3.style.display = 'block';
-        btnDownloadMp3.onclick = () => {
-          window.location.href = data.url;
-        };
-
-        // Advance to Step 2
-        card1.classList.remove('active');
-        card1.classList.add('completed');
-        card2.classList.add('active');
-        btnTranscribe.disabled = false;
-
-        showMsg('msg1', 'Convertido para MP3!', 'success');
-      } catch (error) {
-        clearInterval(interval);
-        showMsg('msg1', error.message, 'error');
-        btnConvert.disabled = false;
-      }
-    });
-
-    // Step 2: Transcription with Real Progress
-    btnTranscribe.addEventListener('click', async () => {
-      if (!convertedFilename) return;
-
-      btnTranscribe.disabled = true;
-      const prog = document.getElementById('prog2');
-      const fill = document.getElementById('fill2');
-      const progText = document.getElementById('progText2');
-      prog.style.display = 'block';
-
-      // Criar conexão SSE para progresso real
-      const eventSource = new EventSource(`/api/transcribe-progress?filename=${convertedFilename}`);
-
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-
-        if (data.status === 'progress') {
-          fill.style.width = data.percent + '%';
-          progText.textContent = data.message || `Transcrevendo: ${data.percent}%`;
-        } else if (data.status === 'completed') {
-          eventSource.close();
-          transcription = data.transcription;
-          transcriptionText.value = transcription;
-          prog.style.display = 'none';
-
-          card2.classList.remove('active');
-          card2.classList.add('completed');
-          card3.classList.add('active');
-          btnSaveMd.disabled = false;
-          mdPreview.innerHTML = `<pre># Transcrição\n\n${transcription.substring(0, 100)}...</pre>`;
-        } else if (data.status === 'error') {
-          eventSource.close();
-          showMsg('msg2', data.message, 'error');
-          btnTranscribe.disabled = false;
-          prog.style.display = 'none';
-        }
-      };
-
-      eventSource.onerror = () => {
-        eventSource.close();
-        // Se falhar SSE, tentamos o fallback normal (opcional)
-      };
-    });
-
-    // Step 3: Save Markdown
-    btnSaveMd.addEventListener('click', async () => {
-      const text = transcriptionText.value;
-      if (!text) return;
-
-      btnSaveMd.disabled = true;
-
-      try {
-        const response = await fetch('/api/generate-markdown', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, filename: convertedFilename }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Erro ao gerar Markdown');
-
-        // Download file
-        const link = document.createElement('a');
-        link.href = data.url;
-        link.download = data.filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        showMsg('msg3', 'Markdown baixado com sucesso!', 'success');
-        card3.classList.add('completed');
-        document.getElementById('btnFinish').style.display = 'block';
-        btnSaveMd.style.display = 'none';
-      } catch (error) {
-        showMsg('msg3', error.message, 'error');
-        btnSaveMd.disabled = false;
-      }
-    });
-
-    function showMsg(id, text, type) {
-      const el = document.getElementById(id);
-      el.textContent = text;
-      el.className = `message visible ${type}`;
-    }
-
-    function resetAll() {
-      location.reload();
-    }
-  </script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/videoFlow.js"></script>
+  <script src="/js/pdfFlow.js"></script>
 </body>
 
 </html>
